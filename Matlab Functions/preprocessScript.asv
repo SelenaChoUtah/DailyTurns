@@ -1,0 +1,76 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%             The purpose of this script is to pull in the raw data:
+%                 1) resampleCWA: resamples data to 100Hz, for some
+%                     reason, the IMU records replicates
+%                 2) Calculates the number of days and separate it 
+%                     midnight to midnight
+%                 3) In each day look for calibration movements and
+%                     reorient the sensors. 
+
+%% Set subject folder path %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+mainPath = 'D:\Daily Headturns\Head Turn Pilot Study\';
+subjectFolderPath = 'D:\Daily Headturns\Head Turn Pilot Study\Subjects';
+
+% This resamples and removes replications of datapoints 
+run resampling.m
+
+%% Reorient the sensors %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+resamplePath = 'D:\Daily Headturns\Head Turn Pilot Study\Resample\';
+subfolders = dir(resamplePath);
+subfolders = subfolders(~ismember({subfolders.name}, {'.', '..'}));
+
+reorientFolderPath = fullfile(mainPath, 'Reorient');
+if ~isfolder(reorientFolderPath)
+    mkdir(reorientFolderPath);
+end
+
+% Reorient the sensors
+% rearrange accel data to (V,ML,AP) to rotate sensor
+% Head sensor accel (V,ML,AP)=(ax,az,-ay)
+% Neck+Lumbar accel (V,ML,AP)=(ay,-ax,az)
+for i = 1%:length(subfolders)
+    subject = load(subfolders(1).name);
+    fn = string(fieldnames(subject));
+    sensor = fieldnames(subject.(fn));
+    for j = 1:length(sensor)
+        if strcmp(sensor(j),'head')
+            reorient.(fn).(sensor{j})(:,1) = subject.(fn).(sensor{j})(:,1);
+            reorient.(fn).(sensor{j})(:,2) = subject.(fn).(sensor{j})(:,2);
+            reorient.(fn).(sensor{j})(:,3) = subject.(fn).(sensor{j})(:,4);
+            reorient.(fn).(sensor{j})(:,4) = -subject.(fn).(sensor{j})(:,3);
+            reorient.(fn).(sensor{j})(:,5) = subject.(fn).(sensor{j})(:,5);
+            reorient.(fn).(sensor{j})(:,6) = subject.(fn).(sensor{j})(:,7);
+            reorient.(fn).(sensor{j})(:,7) = -subject.(fn).(sensor{j})(:,6);
+        else
+            reorient.(fn).(sensor{j})(:,1) = subject.(fn).(sensor{j})(:,1);
+            reorient.(fn).(sensor{j})(:,2) = subject.(fn).(sensor{j})(:,3);
+            reorient.(fn).(sensor{j})(:,3) = -subject.(fn).(sensor{j})(:,2);
+            reorient.(fn).(sensor{j})(:,4) = subject.(fn).(sensor{j})(:,4);
+            reorient.(fn).(sensor{j})(:,5) = subject.(fn).(sensor{j})(:,6);
+            reorient.(fn).(sensor{j})(:,6) = -subject.(fn).(sensor{j})(:,5);
+            reorient.(fn).(sensor{j})(:,7) = subject.(fn).(sensor{j})(:,7);
+        end
+    end
+
+    savePath = fullfile(reorientFolderPath, [char(fn) '.mat']);
+    save(savePath, '-struct', 'reorient','-v7.3');        
+    clear subject
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

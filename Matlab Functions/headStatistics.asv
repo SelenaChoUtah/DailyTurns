@@ -1,0 +1,60 @@
+%-------------------------------------------------------------------------%
+% 
+% 1) Number of Days Worn, Mean, StDev
+% 2) Peak Velocity: Mean, StDev, intra-Mean/StDev
+% 3) Amplitude: Mean, StDev, intra-Mean/StDev
+% 
+% -Selena Cho 7/12/2023
+% 
+%-------------------------------------------------------------------------%
+
+numberOfDays = [];
+variableNames = ["meanVelPk","stdVelPk","meanAmp","stdAmp","meanDur","stdDur","numHeadTurns"];
+
+stats.meanVelPk = NaN(8,19);
+stats.stdVelPk = NaN(8,19);
+stats.meanAmp = NaN(8,19);
+stats.stdAmp = NaN(8,19);
+stats.meanDur = NaN(8,19);
+stats.stdDur = NaN(8,19);
+stats.numHeadTurns = NaN(8,19);
+
+id = fieldnames(turnMetrics);
+i = 1;
+sensor = fieldnames(turnMetrics.(id{i}));
+for j = 1:length(sensor)
+    for k = 1:length(variableNames)
+        stats.(sensor{j}).(variableNames{k}) = NaN(8,19);
+    end
+end
+
+
+id = fieldnames(turnMetrics);
+for i = 1:length(id)
+    sensor = fieldnames(turnMetrics.(id{i}));
+    for s = 1:length(sensor)
+        days = fieldnames(turnMetrics.(id{i}).(sensor{s}));
+        d = 0;
+        for j = 1:length(days)
+            if length(turnMetrics.(id{i}).(sensor{s}).(days{j}).velPk) > 20 && ~isempty(turnMetrics.(id{i}).(sensor{s}).(days{j}).velPk)           
+                d = d+1;
+                metrics = ["velPk","amplitude","duration"];
+                for m = 1:length(metrics)
+                    stats.(sensor{s}).(variableNames{m*2-1})(j,i) = mean(turnMetrics.(id{i}).(sensor{s}).(days{j}).(metrics{m}));
+                    stats.(sensor{s}).(variableNames{m*2})(j,i) = std(turnMetrics.(id{i}).(sensor{s}).(days{j}).(metrics{m}));
+    
+    %                 stats.meanVelPk(j,i) = mean(turnMetrics.(id{i}).(sensor).(days{j}).velPk);
+    %                 stats.stdVelPk(j,i) = std(turnMetrics.(id{i}).(sensor).(days{j}).velPk);
+    %                 stats.meanAmp(j,i) = mean(turnMetrics.(id{i}).(sensor).(days{j}).amplitude);
+    %                 stats.stdAmp(j,i) = std(turnMetrics.(id{i}).(sensor).(days{j}).amplitude); 
+    %                 stats.meanDur(j,i) = mean(turnMetrics.(id{i}).(sensor).(days{j}).duration);
+    %                 stats.stdDur(j,i) = std(turnMetrics.(id{i}).(sensor).(days{j}).duration);
+    %                 stats.numHeadTurns(j,i) = length(turnMetrics.(id{i}).(sensor).(days{j}).velPk);
+                end
+                stats.(sensor).(variableNames{7})(j,i) = length(turnMetrics.(id{i}).(sensor).(days{j}).velPk);
+            end
+        end
+    end
+    stats.numberOfDays(i,1) = d;
+end
+
